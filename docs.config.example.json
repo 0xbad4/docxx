@@ -1,0 +1,48 @@
+{
+  "project": {
+    "name": "mylib",
+    "version": "v1.0.0",
+    "author": "you",
+    "repo": "https://github.com/you/mylib",
+    "description": "One-line description of what this library does.",
+
+    "title":   "mylib docs",
+    "favicon": "https://example.com/favicon.ico",
+    "icon": "https://example.com/icon.png",
+
+    "nav": [
+      { "label": "GitHub",    "url": "https://github.com/you/mylib", "icon": "github" },
+      { "label": "Changelog", "url": "https://example.com/changelog.html" }
+    ]
+  },
+
+  "input": ["include", "src"],
+  "patterns": ["*.h", "*.hpp", "*.cpp"],
+
+  "exclude_files": ["*/third_party/*", "*/tests/*"],
+  "exclude": ["*::detail::*", "detail::*", "*::internal::*"],
+  "access": ["public"],
+  "include_undocumented": true,
+
+  "group_by": "namespace",
+  "root_namespace": "mylib",
+
+  "module_order": ["core", "io"],
+  "modules": {
+    "core": { "name": "core" },
+    "io":   { "name": "io" }
+  },
+
+  "strip_macros": ["MYLIB_API", "MYLIB_EXPORT"],
+
+  "source_url":  "https://github.com/you/mylib/blob/main/{file}#L{line}",
+  "source_base": "https://github.com/you/mylib/blob/main/",
+
+  "hjs_code_theme": "atom-one-dark",
+
+  "overview_file": "OVERVIEW.md",
+
+  "overrides": {
+    "core": { "brief": "Core types and functions." }
+  }
+}

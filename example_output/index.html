@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>docs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <div id="app">
+
+    <!-- ============ TOP BAR: small screens only (toggles for the two navs) ============ -->
+    <div id="topbar">
+      <button type="button" class="tb-btn" id="btn-nav" aria-controls="sidebar" aria-expanded="false">
+        <i class="fa-solid fa-bars"></i><span class="tb-label">Menu</span>
+      </button>
+      <button type="button" class="tb-btn" id="btn-sub" aria-controls="nav-sub" aria-expanded="false">
+        <i class="fa-solid fa-list-ul"></i><span class="tb-label">On this page</span>
+      </button>
+    </div>
+
+    <!-- ============ LEFT: project info + search + main navigation + footer ============ -->
+    <aside id="sidebar">
+      <header class="sb-head">
+        <div class="sb-title-row">
+          <h1 class="sb-title" id="project-name">Project Name</h1>
+          <span class="sb-version" id="project-version">v0.0.0</span>
+        </div>
+        <p class="sb-desc" id="project-desc">Description</p>
+      </header>
+
+      <label class="sb-search" for="search-input">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input id="search-input" type="text" placeholder="Search" autocomplete="off" spellcheck="false">
+      </label>
+
+      <!-- main navigation: overview, modules, namespaces, classes (nested lists) -->
+      <nav class="sb-nav" id="nav-main" aria-label="Main navigation">
+        <ul class="nav-list" id="nav-list" data-label="main navigation"></ul>
+      </nav>
+
+      <footer class="sb-foot">
+        <span class="foot-author" id="author">Author</span>
+        <a class="foot-repo" id="repo" href="https://github.com/" target="_blank" rel="noopener" title="Source code">
+          <i class="fa-solid fa-code"></i><span>Source</span>
+        </a>
+      </footer>
+    </aside>
+
+    <!-- ============ CENTER: body ============ -->
+    <main id="content" data-label="body"></main>
+
+    <!-- ============ RIGHT: sub navigation (flat list) ============ -->
+    <aside id="nav-sub" aria-label="On this page">
+      <div class="sub-box">
+        <ul class="sub-list" id="sub-list"></ul>
+      </div>
+    </aside>
+
+  </div>
+  <!-- dims the page behind an open drawer; click to close -->
+  <div id="scrim" aria-hidden="true"></div>
+
+  <script>
+    /* Nav drawers (tablet: sub nav, mobile: both). Pure UI state - toggles
+       body.sidebar-open / body.sub-open, the stylesheet does the rest. */
+    (() => {
+      const body = document.body;
+      const btnNav = document.getElementById('btn-nav');
+      const btnSub = document.getElementById('btn-sub');
+      const scrim = document.getElementById('scrim');
+      const subList = document.getElementById('sub-list');
+
+      function show(which) {                       // 'sidebar' | 'sub' | null
+        body.classList.toggle('sidebar-open', which === 'sidebar');
+        body.classList.toggle('sub-open', which === 'sub');
+        btnNav.setAttribute('aria-expanded', String(which === 'sidebar'));
+        btnSub.setAttribute('aria-expanded', String(which === 'sub'));
+      }
+      const current = () => body.classList.contains('sidebar-open') ? 'sidebar'
+        : body.classList.contains('sub-open') ? 'sub' : null;
+
+      btnNav.addEventListener('click', () => show(current() === 'sidebar' ? null : 'sidebar'));
+      btnSub.addEventListener('click', () => show(current() === 'sub' ? null : 'sub'));
+      scrim.addEventListener('click', () => show(null));
+
+      document.addEventListener('keydown', e => {
+        if (e.key !== 'Escape' || !current()) return;
+        (current() === 'sidebar' ? btnNav : btnSub).focus();
+        show(null);
+      });
+
+      // Close after picking a destination (not when just expanding a tree node).
+      document.getElementById('nav-list').addEventListener('click', e => {
+        const row = e.target.closest('.nav-row');
+        if (row && row.parentElement.dataset.path && !e.target.closest('.nav-chevron')) show(null);
+      });
+      subList.addEventListener('click', e => {
+        if (e.target.closest('.sub-row')) show(null);
+      });
+      document.getElementById('search-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter') show(null);         // reveal the results behind the drawer
+      });
+
+      // Leaving the small-screen layouts resets any open drawer.
+      matchMedia('(max-width: 1100px)').addEventListener('change', () => show(null));
+      matchMedia('(max-width: 760px)').addEventListener('change', () => show(null));
+
+      // Nothing to list on pages without members (e.g. Overview): disable the button.
+      const syncSub = () => {
+        btnSub.disabled = !subList.children.length;
+        if (btnSub.disabled && current() === 'sub') show(null);
+      };
+      new MutationObserver(syncSub).observe(subList, { childList: true });
+      syncSub();
+    })();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>

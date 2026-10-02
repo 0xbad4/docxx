@@ -1,0 +1,1623 @@
+/* ==================================================================
+   docs stylesheet
+
+   1. tokens            6. sidebar (left nav)
+   2. base / reset      7. sub nav (right nav)
+   3. syntax + kinds    8. content: shared pieces
+   4. app shell         9. content: signature table + detail panel
+   5. topbar + scrim   10. content: blocks, markdown, nested rows
+                       11. responsive, reduced motion, print
+   ================================================================== */
+
+
+/* ==================================================================
+   1. tokens
+   ================================================================== */
+:root {
+    color-scheme: dark;
+
+    /* surfaces */
+    --bg: #1a1a1c;
+    --panel: #212124;
+    --panel-alt: #27272b;
+    --panel-raise: #2c2c31;
+    --code-bg: #141416;
+
+    /* lines */
+    --border: #444448;
+    --border-soft: #333337;
+
+    /* text */
+    --text: #f2f2f0;
+    --text-dim: #c6c6cb;
+    --text-faint: #97979d;
+
+    /* accents */
+    --accent: #3fe0c9;
+    --accent-dim: #1fae9a;
+    --badge: #6fa8ff;
+    --badge-dim: #3d78d6;
+    --pink: #ff6fa5;
+    --pink-dim: #c94f80;
+    --danger: #ff6b6b;
+    --macro: #8fd3ff;
+
+    /* notes */
+    --note: #ffb340;
+    --note-bg: #3a2c14;
+    --note-border: #5c451e;
+    --note-text: #ffd694;
+
+    /* type */
+    --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+    /* layout */
+    --sidebar-w: 272px;
+    --sub-w: 250px;
+    --drawer-w: min(88vw, 320px);
+    --topbar-h: 52px;
+
+    /* Two border-radius sizes, everywhere. Small for rows/badges/inputs,
+       large for panels/code blocks/callouts. Nothing else is allowed. */
+    --radius-sm: 2px;
+    --radius-lg: 4px;
+
+    /* motion + depth */
+    --ease: cubic-bezier(.2, .7, .2, 1);
+    --t-fast: .15s;
+    --t-drawer: .26s;
+    --shadow-drawer: 0 0 40px rgba(0, 0, 0, .55);
+    --focus-ring: 2px solid var(--accent);
+
+    /* z-index scale */
+    --z-topbar: 20;
+    --z-scrim: 30;
+    --z-drawer: 40;
+}
+
+
+/* ==================================================================
+   2. base / reset
+   ================================================================== */
+* {
+    box-sizing: border-box;
+}
+
+html {
+    /* Scroll anchoring fights our own scrollIntoView() calls when a
+       detail row expands or a tree node opens off-screen. */
+    overflow-anchor: none;
+    scroll-behavior: smooth;
+    scroll-padding-top: 12px;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15.5px;
+    line-height: 1.7;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+/* Locks page scroll while a drawer is open (set by the nav toggle script). */
+body.sidebar-open,
+body.sub-open {
+    overflow: hidden;
+}
+
+::selection {
+    background: var(--accent-dim);
+    color: #0e0e0f;
+}
+
+a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+button {
+    font-family: inherit;
+}
+
+ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+code {
+    font-family: var(--mono);
+    font-variant-ligatures: none;
+}
+
+/* Keyboard focus: visible for keyboard users, invisible for mouse clicks. */
+:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.nav-row:focus-visible,
+.sub-row:focus-visible {
+    outline-offset: -2px;
+}
+
+.sb-search input:focus-visible {
+    outline: none;
+}
+
+/* Scrollbars */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-faint);
+}
+
+
+/* ==================================================================
+   3. syntax tokens + kind colors
+   ================================================================== */
+
+/* Minimal C++ highlighting used inside <code>: keyword / comment /
+   string / number / preprocessor. Identifiers and type names are left
+   uncolored on purpose. Emitted by Documentation.highlight_cpp(). */
+.kw { color: var(--accent); }
+.cm { color: var(--text-faint); font-style: italic; }
+.st { color: var(--note); }
+.nm { color: var(--badge); }
+.pp { color: var(--pink); }
+
+/* One color per node type, shared by the left tree, the sub nav, kind
+   badges and member blocks. Add a type -> new rule here and it is
+   colored everywhere at once. */
+.icon-root { color: var(--text-faint); }
+.icon-namespace { color: var(--badge); }
+.icon-class,
+.icon-struct { color: var(--accent-dim); }
+.icon-enum { color: var(--badge); }
+.icon-alias { color: var(--pink); }
+.icon-macro { color: var(--macro); }
+.icon-function,
+.icon-method,
+.icon-constructor,
+.icon-destructor { color: var(--text-faint); }
+.icon-field,
+.icon-variable { color: var(--note); }
+
+
+/* ==================================================================
+   4. app shell
+
+   Desktop : three columns, sidebar + content + sub nav. Only the
+             columns scroll, never the page.
+   Tablet  : sub nav becomes a drawer from the right.
+   Mobile  : both navs are drawers, the page itself scrolls.
+   ================================================================== */
+#app {
+    display: grid;
+    grid-template-columns: var(--sidebar-w) minmax(0, 1fr) var(--sub-w);
+    grid-template-rows: auto minmax(0, 1fr);
+    height: 100vh;
+    height: 100dvh;
+}
+
+#sidebar {
+    grid-column: 1;
+    grid-row: 1 / -1;
+}
+
+#topbar {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+#content {
+    grid-column: 2;
+    grid-row: 2;
+}
+
+#nav-sub {
+    grid-column: 3;
+    grid-row: 1 / -1;
+}
+
+#content {
+    min-width: 0;
+    min-height: 0;
+    padding: 40px 44px 100px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scroll-padding-top: 12px;
+}
+
+/* Hidden until a breakpoint needs them. */
+#topbar,
+#scrim {
+    display: none;
+}
+
+
+/* ==================================================================
+   5. topbar + scrim (small screens only)
+   ================================================================== */
+#topbar {
+    align-items: center;
+    gap: 8px;
+    height: var(--topbar-h);
+    padding: 0 14px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    z-index: var(--z-topbar);
+}
+
+.tb-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 34px;
+    padding: 0 12px;
+    background: var(--panel-alt);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+    color: var(--text-dim);
+    font-size: .84rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: color var(--t-fast), border-color var(--t-fast), background var(--t-fast);
+}
+
+.tb-btn:hover {
+    color: var(--text);
+    border-color: var(--border);
+    background: var(--panel-raise);
+}
+
+.tb-btn[aria-expanded="true"] {
+    color: var(--accent);
+    border-color: var(--accent-dim);
+}
+
+.tb-btn:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.tb-btn i {
+    font-size: .85rem;
+}
+
+#scrim {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-scrim);
+    background: rgba(10, 10, 11, .62);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--t-drawer) var(--ease), visibility 0s linear var(--t-drawer);
+}
+
+body.sidebar-open #scrim,
+body.sub-open #scrim {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 0s;
+}
+
+
+/* ==================================================================
+   6. sidebar - project head, search, tree, footer
+   ================================================================== */
+#sidebar {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+}
+
+.sb-head {
+    padding: 18px 18px 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+/* Project icon above title (inserted by app.js) */
+.sb-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 8px;
+}
+
+.sb-icon img {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    border-radius: var(--radius-lg);
+}
+
+.sb-title-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.sb-title {
+    margin: 0;
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: .01em;
+    overflow-wrap: anywhere;
+}
+
+.sb-version {
+    padding: 0 6px;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+    color: var(--badge);
+    font-family: var(--mono);
+    font-size: .72rem;
+    white-space: nowrap;
+}
+
+.sb-desc {
+    margin: 8px 0 0;
+    color: var(--text-dim);
+    font-size: .86rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+/* search */
+.sb-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    margin: 14px 14px 12px;
+    padding: 0 11px;
+    background: var(--code-bg);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    color: var(--text-faint);
+    cursor: text;
+    transition: border-color var(--t-fast), color var(--t-fast);
+}
+
+.sb-search:focus-within {
+    border-color: var(--accent-dim);
+    color: var(--accent);
+}
+
+.sb-search input {
+    flex: 1;
+    min-width: 0;
+    background: none;
+    border: 0;
+    outline: 0;
+    color: var(--text);
+    font: inherit;
+    font-size: .9rem;
+}
+
+.sb-search input::placeholder {
+    color: var(--text-faint);
+}
+
+/* nav container: fills the remaining height and scrolls on its own */
+.sb-nav {
+    flex: 1;
+    min-height: 0;
+    margin: 0 14px;
+    padding: 8px;
+    overflow-y: auto;
+    overflow-anchor: none;
+}
+
+/* ---------- tree ---------- */
+.nav-list,
+.nav-children {
+    overflow-x: hidden;
+}
+
+.nav-list ul {
+    margin: 2px 0 2px 12px;
+    padding-left: 8px;
+    border-left: 1px solid var(--border-soft);
+}
+
+.nav-children {
+    display: none;
+}
+
+.nav-item.open > .nav-children {
+    display: block;
+}
+
+.nav-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 8px;
+    overflow: hidden;
+    border-radius: var(--radius-sm);
+    color: var(--text-dim);
+    font-size: .86rem;
+    cursor: pointer;
+    user-select: none;
+    transition: background var(--t-fast), color var(--t-fast);
+}
+
+/* Button rows inside nav behave like anchor rows */
+button.nav-row {
+    width: 100%;
+    background: none;
+    border: none;
+    text-align: left;
+    font: inherit;
+}
+
+.nav-row:hover {
+    background: var(--panel-alt);
+    color: var(--text);
+    text-decoration: none;
+}
+
+.nav-chevron {
+    flex: none;
+    font-size: .5rem;
+    transition: transform var(--t-fast);
+}
+
+.nav-chevron.spacer {
+    visibility: hidden;
+}
+
+.nav-item.open > .nav-row .nav-chevron {
+    transform: rotate(90deg);
+}
+
+.nav-icon {
+    flex: none;
+    font-size: .8rem;
+    color: var(--text-faint);
+}
+
+.nav-row.item-selected .nav-icon {
+    color: var(--accent);
+}
+
+/* label + brief subtitle stacked, so icons stay vertically centred while
+   the text can run to two lines */
+.nav-label-group {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.nav-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;          /* wrap instead of scrolling sideways when deeply nested */
+}
+
+.nav-brief {
+    margin-top: 1px;
+    overflow: hidden;
+    color: var(--text-faint);
+    font-size: .72rem;
+    font-weight: 400;
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* selected row, used by both the left tree and the sub nav */
+.item-selected {
+    background-color: var(--panel-alt);
+    color: var(--accent-dim);
+    font-weight: 600;
+}
+
+.item-selected:hover {
+    color: var(--accent);
+}
+
+/* ---------- footer ---------- */
+.sb-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 12px;
+    padding: 12px 18px;
+    border-top: 1px solid var(--border);
+    color: var(--text-faint);
+    font-family: var(--mono);
+    font-size: .78rem;
+}
+
+.foot-author {
+    overflow: hidden;
+    color: var(--text-dim);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.foot-repo {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-faint);
+}
+
+.foot-repo:hover {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+
+/* ==================================================================
+   7. sub nav - flat "on this page" list
+   ================================================================== */
+#nav-sub {
+    min-height: 0;
+    padding: 18px 12px;
+    overflow-y: auto;
+    overflow-anchor: none;
+    border-left: 1px solid var(--border);
+}
+
+.sub-box {
+    min-height: 120px;
+    padding: 8px;
+}
+
+.sub-group-label {
+    padding: 10px 10px 4px;
+    color: var(--text-faint);
+    font-family: var(--mono);
+    font-size: .68rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.sub-group-label:first-child {
+    padding-top: 4px;
+}
+
+.sub-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    overflow: hidden;
+    border-radius: var(--radius-sm);
+    color: var(--text-dim);
+    font-size: .84rem;
+    cursor: pointer;
+    user-select: none;
+    transition: background var(--t-fast), color var(--t-fast);
+}
+
+.sub-row:hover {
+    background: var(--panel-alt);
+    color: var(--text);
+}
+
+.sub-icon {
+    flex: none;
+    font-size: .78rem;
+    color: var(--text-faint);
+}
+
+.sub-label {
+    overflow: hidden;
+    font-family: var(--mono);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+/* ==================================================================
+   8. content: shared pieces (callouts, badges, source links, tables)
+   ================================================================== */
+.body-group-heading {
+    margin: 28px 0 10px;
+    color: var(--text-dim);
+    font-family: var(--sans);
+    font-size: .95rem;
+    font-weight: 600;
+}
+
+.body-item-brief {
+    margin: 10px 0 0;
+    color: var(--text-dim);
+    font-size: .9rem;
+    overflow-wrap: anywhere;
+}
+
+.body-item-desc {
+    margin: 6px 0 0;
+    color: var(--text-dim);
+    font-size: .88rem;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+/* kind badge - class/namespace headers, member heads, overview rows */
+.kind-badge {
+    flex: none;
+    padding: 1px 8px;
+    border: 1px solid currentColor;
+    border-radius: var(--radius-sm);
+    font-family: var(--mono);
+    font-size: .68rem;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+/* file:line source link - detail panels, member blocks, page heads */
+.body-source {
+    color: var(--text-faint);
+    font-family: var(--mono);
+    font-size: .74rem;
+    white-space: nowrap;
+    overflow-wrap: anywhere;
+}
+
+a.body-source:hover {
+    color: var(--accent);
+}
+
+/* ---------- notes / callouts ---------- */
+.body-notes {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 20px 0;
+}
+
+.callout {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--panel-alt);
+    border: 1px solid var(--border-soft);
+    border-left: 3px solid var(--text-faint);
+    border-radius: var(--radius-lg);
+}
+
+.callout-icon {
+    margin-top: 2px;
+    color: var(--text-faint);
+    font-size: .82rem;
+}
+
+.callout-text {
+    margin: 0;
+    color: var(--text-dim);
+    font-size: .86rem;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.callout-warn {
+    background: var(--note-bg);
+    border-color: var(--note-border);
+    border-left-color: var(--note);
+}
+
+.callout-warn .callout-icon { color: var(--note); }
+.callout-warn .callout-text { color: var(--note-text); }
+
+.callout-info {
+    background: rgba(111, 168, 255, .08);
+    border-color: rgba(111, 168, 255, .3);
+    border-left-color: var(--badge);
+}
+
+.callout-info .callout-icon { color: var(--badge); }
+
+.callout-danger {
+    background: rgba(255, 107, 107, .08);
+    border-color: rgba(255, 107, 107, .3);
+    border-left-color: var(--danger);
+}
+
+.callout-danger .callout-icon { color: var(--danger); }
+.callout-danger .callout-text { color: var(--text); }
+
+/* ---------- plain name/type/description table (enum values, struct fields) ---------- */
+.body-table {
+    width: 100%;
+    margin: 10px 0 4px;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: .85rem;
+}
+
+.body-table th {
+    padding: 6px 12px 8px 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-faint);
+    font-family: var(--mono);
+    font-size: .68rem;
+    letter-spacing: .05em;
+    text-align: left;
+    text-transform: uppercase;
+}
+
+.body-table td {
+    padding: 8px 12px 8px 0;
+    border-bottom: 1px solid var(--border-soft);
+    vertical-align: top;
+    overflow-wrap: anywhere;
+}
+
+.body-table th:first-child,
+.body-table td:first-child { width: 22%; }
+
+.body-table th:nth-child(2),
+.body-table td:nth-child(2) { width: 26%; }
+
+.body-table tr:last-child td {
+    border-bottom: none;
+}
+
+.body-table-name {
+    color: var(--text);
+    font-family: var(--mono);
+}
+
+.body-table-type {
+    font-family: var(--mono);
+}
+
+.body-table-desc {
+    color: var(--text-dim);
+}
+
+/* ---------- overview page ---------- */
+.overview-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 16px 0 8px;
+}
+
+.meta-pill {
+    padding: 3px 10px;
+    background: var(--panel);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: .76rem;
+}
+
+a.meta-pill:hover {
+    border-color: var(--accent-dim);
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.overview-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.overview-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    overflow: hidden;
+    background: var(--panel);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: background var(--t-fast), border-color var(--t-fast);
+}
+
+.overview-row:hover {
+    background: var(--panel-alt);
+    border-color: var(--border);
+}
+
+.overview-icon {
+    flex: none;
+    font-size: .95rem;
+}
+
+.overview-name {
+    color: var(--text);
+    font-family: var(--mono);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.overview-brief {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--text-faint);
+    font-size: .86rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ---------- class / namespace page head ---------- */
+.page-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.page-icon {
+    flex: none;
+    font-size: 1.5rem;
+}
+
+.page-title {
+    margin: 0;
+    font-family: var(--mono);
+    font-size: 1.9rem;
+    font-weight: 700;
+    letter-spacing: .01em;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.page-head .body-source {
+    margin-left: auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* declaration block - an editor line, so it reads as code first */
+.page-sig {
+    margin-bottom: 20px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    background: var(--code-bg);
+    border: 1px solid var(--border-soft);
+    border-left: 3px solid var(--accent-dim);
+    border-radius: var(--radius-lg);
+    font-size: .92rem;
+}
+
+.page-sig code {
+    white-space: pre;
+}
+
+.inherits-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 22px;
+    font-size: .88rem;
+}
+
+.inherits-label {
+    color: var(--text-faint);
+    font-family: var(--mono);
+    font-size: .72rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.inherits-access {
+    color: var(--badge);
+    font-family: var(--mono);
+}
+
+.inherits-name {
+    color: var(--accent);
+    font-family: var(--mono);
+}
+
+
+/* ==================================================================
+   9. signature table + expandable detail panel
+
+   NOTE: with border-collapse: collapse, padding on <table>, <tbody>
+   and <tr> is ignored by browsers. All spacing in these tables is
+   therefore set on the <td>/<th> cells themselves.
+   ================================================================== */
+.sig-table {
+    width: 100%;
+    margin-top: 4px;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.sig-table thead th {
+    padding: 6px 16px 10px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-faint);
+    font-family: var(--mono);
+    font-size: .7rem;
+    letter-spacing: .06em;
+    text-align: left;
+    text-transform: uppercase;
+}
+
+.sig-table thead th:first-child {
+    width: 55%;
+}
+
+/* ---------- summary row ---------- */
+.sig-row {
+    border-bottom: 1px solid var(--border-soft);
+    cursor: pointer;
+    transition: background var(--t-fast);
+}
+
+.sig-row:hover {
+    background: var(--panel-alt);
+}
+
+.sig-row.no-detail,
+.sig-row.no-detail:hover {
+    cursor: default;
+    background: none;
+}
+
+.sig-row td {
+    padding: 16px;
+    vertical-align: top;
+    overflow-wrap: anywhere;
+}
+
+.sig-cell {
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: .88rem;
+}
+
+/* The description cell stays a real table cell; the chevron is pinned to
+   its right edge so the cell keeps normal table-cell sizing. */
+.sig-row .desc-cell {
+    position: relative;
+    padding-right: 42px;
+    color: var(--text-dim);
+    font-size: .88rem;
+    line-height: 1.55;
+}
+
+.row-chevron {
+    position: absolute;
+    top: 19px;
+    right: 16px;
+    color: var(--text-faint);
+    font-size: .7rem;
+    transition: transform var(--t-fast) ease, color var(--t-fast);
+}
+
+.row-chevron.spacer {
+    visibility: hidden;
+}
+
+.sig-row:hover .row-chevron {
+    color: var(--text-dim);
+}
+
+/* open state: row and panel share one background and one accent edge,
+   so they read as a single card */
+.sig-row.open {
+    background: var(--panel-alt);
+    border-bottom: none;
+}
+
+.sig-row.open .row-chevron {
+    color: var(--accent);
+    transform: rotate(90deg);
+}
+
+/* ---------- detail panel ---------- */
+.sig-detail {
+    display: none;
+    background: var(--panel-alt);
+    border-bottom: 1px solid var(--border-soft);
+}
+
+.sig-row.open + .sig-detail {
+    display: table-row;
+}
+
+.sig-detail > td {
+    min-width: 0;
+    padding: 6px 28px 28px 28px;
+    cursor: default;
+}
+
+/* even rhythm between blocks inside the panel */
+.sig-detail > td > * {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.sig-detail > td > * + * {
+    margin-top: 18px;
+}
+
+.detail-heading {
+    margin: 0 0 10px;
+    color: var(--text-faint);
+    font-family: var(--mono);
+    font-size: .68rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.detail-desc {
+    color: var(--text-dim);
+    font-size: .88rem;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.detail-return {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px 10px;
+}
+
+.detail-return-type {
+    font-size: .88rem;
+}
+
+.detail-return-desc {
+    color: var(--text-dim);
+    font-size: .86rem;
+}
+
+/* parameter list */
+.param-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .84rem;
+}
+
+.param-table td {
+    padding: 8px 16px 8px 0;
+    border-top: 1px solid var(--border-soft);
+    vertical-align: top;
+    color: var(--text-dim);
+    overflow-wrap: anywhere;
+}
+
+.param-table tr:first-child td {
+    border-top: none;
+}
+
+.param-name {
+    color: var(--accent);
+    font-family: var(--mono);
+    white-space: nowrap;
+}
+
+.param-type {
+    font-family: var(--mono);
+    white-space: nowrap;
+}
+
+.param-desc {
+    color: var(--text-dim);
+}
+
+
+/* ==================================================================
+   10. enum / struct / alias / macro blocks, markdown, nested rows
+   ================================================================== */
+.member-block {
+    margin: 10px 0 26px;
+    scroll-margin-top: 24px;
+}
+
+.member-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.member-name {
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 1.05rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.member-block-sig {
+    display: block;
+    padding: 12px 16px;
+    background: var(--code-bg);
+    border: 1px solid var(--border-soft);
+    border-left: 3px solid currentColor;
+    border-radius: var(--radius-lg);
+    font-size: .88rem;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.member-block.icon-enum .member-block-sig { color: var(--badge); }
+.member-block.icon-struct .member-block-sig { color: var(--accent-dim); }
+.member-block.icon-alias .member-block-sig { color: var(--pink); }
+.member-block.icon-macro .member-block-sig { color: var(--macro); }
+
+.member-block > .body-source {
+    display: block;
+    margin-top: 8px;
+}
+
+/* ---------- markdown blocks (@markdown / @markdownend in doc comments) ---------- */
+.markdown-block {
+    margin: 16px 0;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+}
+
+.markdown-title {
+    margin-bottom: 12px;
+    color: var(--accent);
+    font-size: .95rem;
+    font-weight: 600;
+}
+
+.markdown-body {
+    color: var(--text-dim);
+    font-size: .95rem;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+    margin: 16px 0 8px;
+    color: var(--text);
+    line-height: 1.3;
+}
+
+.markdown-body h1 { font-size: 1.5em; }
+.markdown-body h2 { font-size: 1.3em; }
+.markdown-body h3 { font-size: 1.1em; }
+
+.markdown-body > :first-child { margin-top: 0; }
+.markdown-body > :last-child { margin-bottom: 0; }
+
+.markdown-body code {
+    padding: 2px 6px;
+    background: var(--code-bg);
+    border-radius: var(--radius-sm);
+    font-size: .9em;
+}
+
+.markdown-body pre {
+    margin: 12px 0;
+    padding: 12px;
+    overflow-x: auto;
+    background: var(--code-bg);
+    border-radius: var(--radius-lg);
+}
+
+.markdown-body pre code {
+    padding: 0;
+    background: none;
+}
+
+.markdown-body a {
+    color: var(--accent);
+}
+
+.markdown-body blockquote {
+    margin-left: 0;
+    padding-left: 12px;
+    border-left: 3px solid var(--border);
+    color: var(--text-faint);
+}
+
+.markdown-body ul,
+.markdown-body ol {
+    margin: 8px 0;
+    padding-left: 28px;
+}
+
+/* restore list markers (the global ul reset removes them) */
+.markdown-body ul { list-style: disc; }
+.markdown-body ol { list-style: decimal; }
+
+.markdown-body table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+}
+
+.markdown-body th,
+.markdown-body td {
+    padding: 6px 12px;
+    border: 1px solid var(--border-soft);
+}
+
+.markdown-body img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* ---------- nested children (child namespaces / classes) ---------- */
+.nested-children {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 16px 0;
+}
+
+.nested-child-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: var(--panel-alt);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+}
+
+.nested-icon {
+    font-size: .9rem;
+}
+
+.nested-name {
+    flex: 1;
+    color: var(--accent);
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.nested-name:hover {
+    text-decoration: underline;
+}
+
+.nested-brief {
+    margin-left: auto;
+    color: var(--text-faint);
+    font-size: .85rem;
+}
+
+
+/* ==================================================================
+   11. responsive
+   ================================================================== */
+
+/* ---------- tablet: sub nav becomes a right-hand drawer ---------- */
+@media (max-width: 1100px) {
+    #app {
+        grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+    }
+
+    #topbar {
+        display: flex;
+    }
+
+    /* the left nav is still docked here, so only the sub nav needs a button */
+    #btn-nav {
+        display: none;
+    }
+
+    #content {
+        padding: 32px 28px 80px;
+    }
+
+    #scrim {
+        display: block;
+    }
+
+    #nav-sub {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        z-index: var(--z-drawer);
+        width: min(88vw, 300px);
+        background: var(--panel);
+        visibility: hidden;
+        transform: translateX(100%);
+        transition: transform var(--t-drawer) var(--ease), visibility 0s linear var(--t-drawer);
+    }
+
+    body.sub-open #nav-sub {
+        visibility: visible;
+        transform: none;
+        transition-delay: 0s;
+    }
+}
+
+/* ---------- mobile: both navs are drawers, the page scrolls ---------- */
+@media (max-width: 760px) {
+    html {
+        scroll-padding-top: calc(var(--topbar-h) + 12px);
+    }
+
+    #app {
+        display: block;
+        height: auto;
+        min-height: 100vh;
+        min-height: 100dvh;
+    }
+
+    #topbar {
+        position: sticky;
+        top: 0;
+        padding: 0 12px;
+    }
+
+    #btn-nav {
+        display: inline-flex;
+    }
+
+    #content {
+        max-height: none;
+        padding: 20px 16px 72px;
+        overflow: visible;
+    }
+
+    #sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        z-index: var(--z-drawer);
+        width: var(--drawer-w);
+        border-right: 1px solid var(--border);
+        visibility: hidden;
+        transform: translateX(-100%);
+        transition: transform var(--t-drawer) var(--ease), visibility 0s linear var(--t-drawer);
+    }
+
+    body.sidebar-open #sidebar {
+        visibility: visible;
+        transform: none;
+        transition-delay: 0s;
+    }
+
+    /* page head */
+    .page-head {
+        flex-wrap: wrap;
+        gap: 6px 12px;
+    }
+
+    .page-title {
+        font-size: 1.45rem;
+    }
+
+    .page-head .body-source {
+        flex-basis: 100%;
+        margin-left: 0;
+    }
+
+    .page-sig {
+        padding: 12px 14px;
+        font-size: .85rem;
+    }
+
+    /* overview rows wrap instead of truncating the name */
+    .overview-row {
+        flex-wrap: wrap;
+        gap: 4px 10px;
+    }
+
+    .overview-name {
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .overview-brief {
+        flex-basis: 100%;
+        white-space: normal;
+    }
+
+    .nested-child-row {
+        flex-wrap: wrap;
+    }
+
+    .nested-brief {
+        flex-basis: 100%;
+        margin-left: 0;
+    }
+
+    /* enum/struct tables: let columns share the width evenly */
+    .body-table {
+        table-layout: auto;
+    }
+
+    .body-table th:first-child,
+    .body-table td:first-child,
+    .body-table th:nth-child(2),
+    .body-table td:nth-child(2) {
+        width: auto;
+    }
+
+    /* ---- signature table stacks into cards ---- */
+    .sig-table,
+    .sig-table tbody,
+    .sig-table tr,
+    .sig-table td {
+        display: block;
+    }
+
+    .sig-table thead {
+        display: none;
+    }
+
+    .sig-row {
+        position: relative;
+        padding: 14px 44px 14px 14px;
+    }
+
+    .sig-row td {
+        padding: 2px 0;
+    }
+
+    /* anchor the chevron to the row (top-right), not to the description cell */
+    .sig-row .desc-cell {
+        position: static;
+        padding-right: 0;
+    }
+
+    .row-chevron {
+        top: 18px;
+        right: 14px;
+    }
+
+    .sig-row.open {
+        border-bottom: 0;
+    }
+
+    /* `.sig-table tr { display: block }` above would reveal closed detail
+       rows, so hide them again and show only the one that follows an open row */
+    .sig-table .sig-detail {
+        display: none;
+    }
+
+    .sig-table .sig-row.open + .sig-detail {
+        display: block;
+    }
+
+    .sig-detail > td {
+        padding: 4px 16px 20px 16px;
+    }
+
+    /* long parameter rows read better stacked */
+    .param-table,
+    .param-table tbody,
+    .param-table tr,
+    .param-table td {
+        display: block;
+    }
+
+    .param-table tr {
+        padding: 8px 0;
+        border-top: 1px solid var(--border-soft);
+    }
+
+    .param-table tr:first-child {
+        border-top: none;
+        padding-top: 0;
+    }
+
+    .param-table td {
+        padding: 1px 0;
+        border-top: none;
+    }
+}
+
+@media (max-width: 420px) {
+    body {
+        font-size: 15px;
+    }
+
+    .sb-head {
+        padding: 16px 14px 14px;
+    }
+
+    .tb-btn {
+        padding: 0 10px;
+    }
+}
+
+/* ---------- reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        transition-duration: .01ms !important;
+        transition-delay: 0s !important;
+        animation-duration: .01ms !important;
+    }
+}
+
+/* ---------- print ---------- */
+@media print {
+    :root {
+        color-scheme: light;
+    }
+
+    body {
+        background: #fff;
+        color: #000;
+    }
+
+    #sidebar,
+    #nav-sub,
+    #topbar,
+    #scrim {
+        display: none !important;
+    }
+
+    #app {
+        display: block;
+        height: auto;
+    }
+
+    #content {
+        padding: 0;
+        overflow: visible;
+    }
+
+    .sig-row + .sig-detail {
+        display: table-row;
+    }
+}

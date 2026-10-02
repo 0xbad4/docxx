@@ -1,0 +1,869 @@
+{
+  "metadata": {
+    "name": "testlib",
+    "version": "v0.1.0",
+    "tagline": "Small fixture library used to exercise the doc generator.",
+    "repo": "github.com/example/testlib",
+    "meta": [
+      "header-only, C++17",
+      "see LICENSE.md"
+    ],
+    "hjs_code_theme": "atom-one-dark"
+  },
+  "overview": [],
+  "modules": [
+    {
+      "name": "core",
+      "type": "namespace",
+      "content": [
+        {
+          "name": "testlib",
+          "type": "namespace",
+          "content": [
+            {
+              "name": "cfg",
+              "type": "namespace",
+              "content": [],
+              "brief": "Configuration loading and validation."
+            },
+            {
+              "name": "detail",
+              "type": "namespace",
+              "content": []
+            },
+            {
+              "type": "class",
+              "name": "Container",
+              "brief": "A widget that can contain other widgets.",
+              "bases": [
+                {
+                  "name": "Widget",
+                  "access": "public"
+                }
+              ],
+              "parent": [
+                {
+                  "name": "Widget",
+                  "access": "public"
+                }
+              ],
+              "content": [
+                {
+                  "type": "constructor",
+                  "name": "Container",
+                  "access": "public",
+                  "flags": [
+                    "explicit"
+                  ],
+                  "params": [
+                    {
+                      "name": "name",
+                      "type": "std::string"
+                    }
+                  ],
+                  "source": {
+                    "file": "include/testlib/core.h",
+                    "line": 103
+                  }
+                },
+                {
+                  "type": "method",
+                  "name": "add_child",
+                  "access": "public",
+                  "brief": "Adds a child widget by name.",
+                  "params": [
+                    {
+                      "name": "name",
+                      "type": "const std::string&"
+                    }
+                  ],
+                  "return": {
+                    "type": "void"
+                  },
+                  "source": {
+                    "file": "include/testlib/core.h",
+                    "line": 106
+                  }
+                }
+              ],
+              "source": {
+                "file": "include/testlib/core.h",
+                "line": 101
+              }
+            },
+            {
+              "type": "enum",
+              "name": "error_type",
+              "brief": "Error codes returned by most operations.",
+              "scoped": true,
+              "underlying": "uint8_t",
+              "values": [
+                {
+                  "name": "NONE",
+                  "value": "0",
+                  "description": "No error."
+                },
+                {
+                  "name": "BAD_ARG",
+                  "description": "An argument was invalid."
+                },
+                {
+                  "name": "OUT_OF_MEMORY",
+                  "description": "Allocation failed."
+                }
+              ],
+              "source": {
+                "file": "include/testlib/core.h",
+                "line": 33
+              }
+            },
+            {
+              "type": "class",
+              "name": "FixedStack",
+              "brief": "A generic fixed-capacity stack.",
+              "template": "template <typename T, int N = 16>",
+              "tparams": [
+                {
+                  "name": "T"
+                },
+                {
+                  "name": "N",
+                  "default": "16"
+                }
+              ],
+              "content": [
+                {
+                  "type": "method",
+                  "name": "push",
+                  "access": "public",
+                  "brief": "Pushes `value`; behavior is undefined if the stack is full.",
+                  "params": [
+                    {
+                      "name": "value",
+                      "type": "const T&"
+                    }
+                  ],
+                  "return": {
+                    "type": "void"
+                  },
+                  "source": {
+                    "file": "include/testlib/core.h",
+                    "line": 126
+                  }
+                },
+                {
+                  "type": "method",
+                  "name": "pop",
+                  "access": "public",
+                  "brief": "Pops and returns the top element.",
+                  "return": {
+                    "type": "T"
+                  },
+                  "source": {
+                    "file": "include/testlib/core.h",
+                    "line": 129
+                  }
+                },
+                {
+                  "type": "method",
+                  "name": "size",
+                  "access": "public",
+                  "brief": "Number of elements currently stored.",
+                  "flags": [
+                    "const",
+                    "noexcept"
+                  ],
+                  "return": {
+                    "type": "int"
+                  },
+                  "source": {
+                    "file": "include/testlib/core.h",
+                    "line": 132
+                  }
+                }
+              ],
+              "source": {
+                "file": "include/testlib/core.h",
+                "line": 123
+              }
+            },
+            {
+              "type": "class",
+              "name": "ScrollView",
+              "brief": "A scrollable container.",
+              "bases": [
+                {
+                  "name": "Container",
+                  "access": "public"
+                }
+              ],
+              "parent": [
+                {
+                  "name": "Container",
+                  "access": "public"
+                }
+              ],
+              "content": [
+                {
+                  "type": "constructor",
+                  "name": "ScrollView",
+                  "access": "public",
+                  "flags": [
+                    "explicit"
+                  ],
+                  "params": [
+                    {
+                      "name": "name",
+                      "type": "std::string"
+                    }
+                  ],
+                  "source": {
+                    "file": "include/testlib/core.h",
+                    "line": 114
+                  }
+                }
+              ],
+              "source": {
+                "file": "include/testlib/core.h",
+                "line": 112
+              }
+            },
+            {
+              "type": "class",
+              "name": "Widget",
+              "brief": "A single widget in the system.",
+              "description": "Widgets are cheap value types; copy them freely.",
+              "notes": [
+                {
+                  "type": "info",
+                  "content": "Widgets are not thread-safe. Guard access externally if shared across threads."
+                }
+              ],
+              "content": [
+                {
+                  "type": "constructor",
+                  "name": "Widget",
+                  "access": "public",
+                  "brief": "Constructs a widget with the given `name`.",
+                  "flags": [
+                    "explicit"
+                  ],
+                  "params": [
+                    {
+                      "name": "name",
+                      "type": "std::string"
+                    }
+                  ],
+                  "source": {
+                    "file": "include/testlib/core.h",
+                    "line": 53
+                  }
+                },
+                {
+                  "type": "destructor",
+                  "name": "~Widget",
+                  "access": "public",
+                  "brief": "Destroys the widget.",
+                  "description": "Any resources owned by the widget are released; this does not affect other widgets that reference it.",
+                  "notes": [
+                    {
+                      "type": "info",
+                      "content": "Safe to call even on a moved-from widget."
+                    }
+                  ],
+                  "source": {
+                    "file": "include/testlib/core.h",
+                    "line": 63
+                  }
+                },
+                {
+                  "type": "method",
+                  "name": "render",
+                  "access": "public",
+                  "brief": "Renders the widget into `buffer`.",
+                  "description": "The widget writes at most `max_len` bytes; callers should check the return value against `max_len` to detect truncation.",
+                  "flags": [
+                    "const"
+                  ],
+                  "notes": [
+                    {
+                      "type": "info",
+                      "content": "Increments render_calls even when it returns -1."
+                    }
+                  ],
+                  "params": [
+                    {
+                      "name": "buffer",
+                      "type": "char*",
+                      "description": "destination buffer, must be non-null"
+                    },
+                    {
+                      "name": "max_len",
+                      "type": "int",
+                      "description": "size of `buffer` in bytes"
+                    }
+                  ],
+                  "return": {
+                    "type": "int",
+                    "description": "number of bytes written, or -1 on error"
+                  },
+                  "source": {
+                    "file": "include/testlib/core.h",
+                    "line": 76
+                  }
+                },
+                {
+                  "type": "method",
+                  "name": "name",
+                  "access": "public",
+                  "brief": "Widget display name.",
+                  "flags": [
+                    "const",
+                    "noexcept"
+                  ],
+                  "return": {
+                    "type": "const std::string&"
+                  },
+                  "source": {
+                    "file": "include/testlib/core.h",
+                    "line": 79
+                  }
+                },
+                {
+                  "type": "method",
+                  "name": "set_visible",
+                  "access": "public",
+                  "brief": "Sets the widget's visibility.",
+                  "flags": [
+                    "noexcept"
+                  ],
+                  "params": [
+                    {
+                      "name": "v",
+                      "type": "bool"
+                    }
+                  ],
+                  "return": {
+                    "type": "void"
+                  },
+                  "source": {
+                    "file": "include/testlib/core.h",
+                    "line": 82
+                  }
+                },
+                {
+                  "type": "method",
+                  "name": "visible",
+                  "access": "public",
+                  "brief": "True if the widget is currently visible.",
+                  "flags": [
+                    "const",
+                    "noexcept"
+                  ],
+                  "return": {
+                    "type": "bool"
+                  },
+                  "source": {
+                    "file": "include/testlib/core.h",
+                    "line": 85
+                  }
+                },
+                {
+                  "type": "field",
+                  "name": "live_count",
+                  "access": "public",
+                  "brief": "Number of widgets constructed so far, process-wide.",
+                  "flags": [
+                    "static",
+                    "inline"
+                  ],
+                  "field_type": "int",
+                  "value": "0",
+                  "source": {
+                    "file": "include/testlib/core.h",
+                    "line": 88
+                  }
+                },
+                {
+                  "type": "field",
+                  "name": "render_calls",
+                  "access": "public",
+                  "brief": "Number of times render() has been called; updated even on a const widget.",
+                  "flags": [
+                    "mutable"
+                  ],
+                  "field_type": "int",
+                  "value": "0",
+                  "source": {
+                    "file": "include/testlib/core.h",
+                    "line": 91
+                  }
+                }
+              ],
+              "source": {
+                "file": "include/testlib/core.h",
+                "line": 50
+              }
+            },
+            {
+              "type": "alias",
+              "name": "word_t",
+              "brief": "Word type used throughout the VM.",
+              "underlying": "uint16_t",
+              "style": "using",
+              "source": {
+                "file": "include/testlib/core.h",
+                "line": 28
+              }
+            },
+            {
+              "type": "function",
+              "name": "err_str",
+              "brief": "Convert an error_type to a human-readable string.",
+              "params": [
+                {
+                  "name": "e",
+                  "type": "error_type"
+                }
+              ],
+              "return": {
+                "type": "const char*"
+              },
+              "source": {
+                "file": "include/testlib/core.h",
+                "line": 40
+              }
+            },
+            {
+              "type": "function",
+              "name": "run",
+              "brief": "Runs the main widget loop.",
+              "params": [
+                {
+                  "name": "widgets",
+                  "type": "const std::vector<Widget>&",
+                  "description": "widgets to process"
+                },
+                {
+                  "name": "error",
+                  "type": "error_type*",
+                  "default": "nullptr",
+                  "description": "set on failure, may be null",
+                  "dir": "out"
+                }
+              ],
+              "return": {
+                "type": "bool",
+                "description": "true on success"
+              },
+              "source": {
+                "file": "include/testlib/core.h",
+                "line": 145
+              }
+            },
+            {
+              "type": "function",
+              "name": "run_legacy",
+              "deprecated": "Use run() instead.",
+              "params": [
+                {
+                  "name": "argc",
+                  "type": "int"
+                },
+                {
+                  "name": "argv",
+                  "type": "char**"
+                }
+              ],
+              "return": {
+                "type": "bool"
+              },
+              "source": {
+                "file": "include/testlib/core.h",
+                "line": 148
+              }
+            }
+          ],
+          "brief": "Root namespace for the whole library."
+        },
+        {
+          "type": "macro",
+          "name": "TESTLIB_CHECK",
+          "brief": "Asserts a condition and returns false on failure.",
+          "flags": [
+            "function-like"
+          ],
+          "value": "do { if (!(cond)) return false; } while (0)",
+          "params": [
+            {
+              "name": "cond"
+            }
+          ],
+          "source": {
+            "file": "include/testlib/core.h",
+            "line": 19
+          }
+        },
+        {
+          "type": "macro",
+          "name": "TESTLIB_MAX_WIDGETS",
+          "brief": "Maximum number of widgets allowed at once.",
+          "value": "64",
+          "source": {
+            "file": "include/testlib/core.h",
+            "line": 12
+          }
+        }
+      ]
+    },
+    {
+      "name": "Math helpers",
+      "type": "group",
+      "brief": "Small vector/matrix utilities.",
+      "content": [
+        {
+          "name": "testlib",
+          "type": "namespace",
+          "content": [
+            {
+              "name": "cfg",
+              "type": "namespace",
+              "content": [],
+              "brief": "Configuration loading and validation."
+            },
+            {
+              "name": "detail",
+              "type": "namespace",
+              "content": []
+            },
+            {
+              "type": "struct",
+              "name": "Vec2",
+              "brief": "A 2D vector of floats.",
+              "content": [
+                {
+                  "type": "field",
+                  "name": "x",
+                  "access": "public",
+                  "brief": "X component.",
+                  "field_type": "float",
+                  "value": "0",
+                  "source": {
+                    "file": "include/testlib/advanced.h",
+                    "line": 21
+                  }
+                },
+                {
+                  "type": "field",
+                  "name": "y",
+                  "access": "public",
+                  "brief": "Y component.",
+                  "field_type": "float",
+                  "value": "0",
+                  "source": {
+                    "file": "include/testlib/advanced.h",
+                    "line": 22
+                  }
+                },
+                {
+                  "type": "method",
+                  "name": "operator+",
+                  "access": "public",
+                  "brief": "Adds two vectors component-wise.",
+                  "flags": [
+                    "const"
+                  ],
+                  "params": [
+                    {
+                      "name": "rhs",
+                      "type": "const Vec2&"
+                    }
+                  ],
+                  "return": {
+                    "type": "Vec2"
+                  },
+                  "source": {
+                    "file": "include/testlib/advanced.h",
+                    "line": 25
+                  }
+                },
+                {
+                  "type": "method",
+                  "name": "operator*=",
+                  "access": "public",
+                  "brief": "In-place scalar multiply.",
+                  "params": [
+                    {
+                      "name": "s",
+                      "type": "float"
+                    }
+                  ],
+                  "return": {
+                    "type": "Vec2&"
+                  },
+                  "source": {
+                    "file": "include/testlib/advanced.h",
+                    "line": 28
+                  }
+                },
+                {
+                  "type": "method",
+                  "name": "operator bool",
+                  "access": "public",
+                  "brief": "Implicit conversion to bool: true if non-zero.",
+                  "flags": [
+                    "explicit",
+                    "const"
+                  ],
+                  "return": {
+                    "type": "bool"
+                  },
+                  "source": {
+                    "file": "include/testlib/advanced.h",
+                    "line": 31
+                  }
+                }
+              ],
+              "markdown": [
+                {
+                  "type": "markdown",
+                  "content": "# This is markdown",
+                  "description": ""
+                }
+              ],
+              "source": {
+                "file": "include/testlib/advanced.h",
+                "line": 20
+              }
+            },
+            {
+              "type": "function",
+              "name": "clamp",
+              "brief": "Clamps `v` between `lo` and `hi`.",
+              "params": [
+                {
+                  "name": "v",
+                  "type": "float"
+                },
+                {
+                  "name": "lo",
+                  "type": "float"
+                },
+                {
+                  "name": "hi",
+                  "type": "float"
+                }
+              ],
+              "return": {
+                "type": "float"
+              },
+              "source": {
+                "file": "include/testlib/advanced.h",
+                "line": 38
+              }
+            }
+          ],
+          "brief": "Root namespace for the whole library."
+        }
+      ]
+    },
+    {
+      "name": "testlib",
+      "type": "namespace",
+      "brief": "Root namespace for the whole library.",
+      "content": [
+        {
+          "name": "cfg",
+          "type": "namespace",
+          "content": [
+            {
+              "type": "function",
+              "name": "load",
+              "brief": "Load settings from a file.",
+              "see": [
+                "save()"
+              ],
+              "params": [
+                {
+                  "name": "path",
+                  "type": "const std::string&",
+                  "description": "filesystem path to a config file"
+                }
+              ],
+              "return": {
+                "type": "bool"
+              },
+              "throws": [
+                {
+                  "type": "std::runtime_error",
+                  "description": "if the file cannot be parsed"
+                }
+              ],
+              "source": {
+                "file": "include/testlib/config.h",
+                "line": 16
+              }
+            },
+            {
+              "type": "function",
+              "name": "save",
+              "brief": "Persists current settings back to `path`.",
+              "params": [
+                {
+                  "name": "path",
+                  "type": "const std::string&"
+                }
+              ],
+              "return": {
+                "type": "bool"
+              },
+              "source": {
+                "file": "include/testlib/config.h",
+                "line": 19
+              }
+            },
+            {
+              "type": "variable",
+              "name": "verbose",
+              "brief": "Global option: enables verbose logging.",
+              "flags": [
+                "extern"
+              ],
+              "field_type": "bool",
+              "source": {
+                "file": "include/testlib/config.h",
+                "line": 22
+              }
+            }
+          ]
+        },
+        {
+          "name": "detail",
+          "type": "namespace",
+          "content": []
+        },
+        {
+          "type": "class",
+          "name": "Dispatcher",
+          "brief": "A tiny event dispatcher.",
+          "content": [
+            {
+              "type": "struct",
+              "name": "Listener",
+              "access": "public",
+              "brief": "One registered listener.",
+              "content": [
+                {
+                  "type": "field",
+                  "name": "id",
+                  "access": "public",
+                  "brief": "Unique listener id.",
+                  "field_type": "int",
+                  "source": {
+                    "file": "include/testlib/advanced.h",
+                    "line": 59
+                  }
+                },
+                {
+                  "type": "field",
+                  "name": "once",
+                  "access": "public",
+                  "brief": "Auto-unregister after first fire.",
+                  "field_type": "bool",
+                  "value": "false",
+                  "source": {
+                    "file": "include/testlib/advanced.h",
+                    "line": 60
+                  }
+                }
+              ],
+              "source": {
+                "file": "include/testlib/advanced.h",
+                "line": 58
+              }
+            },
+            {
+              "type": "method",
+              "name": "subscribe",
+              "access": "public",
+              "brief": "Registers a listener and returns its id.",
+              "params": [
+                {
+                  "name": "once",
+                  "type": "bool",
+                  "default": "false"
+                }
+              ],
+              "return": {
+                "type": "int"
+              },
+              "source": {
+                "file": "include/testlib/advanced.h",
+                "line": 64
+              }
+            },
+            {
+              "type": "method",
+              "name": "unsubscribe",
+              "access": "public",
+              "brief": "Removes a previously registered listener.",
+              "params": [
+                {
+                  "name": "id",
+                  "type": "int"
+                }
+              ],
+              "return": {
+                "type": "void"
+              },
+              "source": {
+                "file": "include/testlib/advanced.h",
+                "line": 67
+              }
+            }
+          ],
+          "source": {
+            "file": "include/testlib/advanced.h",
+            "line": 53
+          }
+        },
+        {
+          "type": "alias",
+          "name": "frame_callback_t",
+          "brief": "Callback type invoked once per frame.",
+          "underlying": "void(*)(double dt, void* userdata)",
+          "style": "typedef",
+          "source": {
+            "file": "include/testlib/advanced.h",
+            "line": 41
+          }
+        },
+        {
+          "type": "function",
+          "name": "set_frame_callback",
+          "brief": "Installs a frame callback.",
+          "params": [
+            {
+              "name": "cb",
+              "type": "frame_callback_t",
+              "description": "the callback, or nullptr to remove it"
+            },
+            {
+              "name": "userdata",
+              "type": "void*",
+              "default": "nullptr",
+              "description": "opaque pointer passed back to `cb`"
+            }
+          ],
+          "return": {
+            "type": "void"
+          },
+          "source": {
+            "file": "include/testlib/advanced.h",
+            "line": 48
+          }
+        }
+      ]
+    }
+  ]
+}

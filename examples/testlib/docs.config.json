@@ -1,0 +1,17 @@
+{
+  "project": {
+    "name": "testlib",
+    "version": "v0.1.0",
+    "tagline": "Small fixture library used to exercise the doc generator.",
+    "repo": "github.com/example/testlib",
+    "meta": ["header-only, C++17", "see LICENSE.md"]
+  },
+  "input": ["include"],
+  "patterns": ["*.h", "*.hpp", "*.cpp"],
+  "root_namespace": "",
+  "group_by": "namespace",
+  "banner": [
+    { "kind": "warning", "title": "Fixture only",
+      "text": "This config exists purely to exercise `docgen.py`; it is not a real library." }
+  ]
+}
