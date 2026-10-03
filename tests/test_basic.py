@@ -276,3 +276,28 @@ def test_namespace_content_is_nested(doc):
     assert mod["content"][0]["type"] == "namespace"
     assert mod["content"][0]["name"] == "cfg"
     assert any(item["name"] == "load" for item in mod["content"][0]["content"])
+
+
+def test_documented_inner_namespace_survives_in_json(tmp_path):
+    src = tmp_path / "nested.hpp"
+    src.write_text('''
+/**
+ * @brief Utility helpers used throughout the library.
+ */
+namespace lynx::utils {
+    /**
+     * @brief Status-to-string conversion helpers.
+     */
+    namespace err {
+        int x = 0;
+    }
+}
+''', encoding="utf-8")
+
+    doc = docxx.generate([str(src)], dict(docxx.DEFAULT_CONFIG), root=tmp_path)
+    mod = next(m for m in doc["modules"] if m["name"] == "lynx")
+    utils = next(n for n in mod["content"] if n["name"] == "utils")
+    err = next(n for n in utils["content"] if n["name"] == "err")
+    assert utils["brief"] == "Utility helpers used throughout the library."
+    assert err["brief"] == "Status-to-string conversion helpers."
+    assert any(item["name"] == "x" for item in err["content"])

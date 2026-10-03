@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "docxx"
-version = "0.1.0"
+version = "0.1.1"
 description = "Doxygen-style C/C++ comments, structured JSON documentation with a built-in documentation viewer."
 readme = "README.md"
 requires-python = ">=3.9"

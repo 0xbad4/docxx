@@ -413,8 +413,7 @@ def _namespace_content_for_module(its, cfg, ctx, module_key=""):
             if path not in ns_map:
                 name = path[-1]
                 full = "::".join(path)
-                full_q = f"{cfg['root_namespace']}::{full}" if cfg.get("root_namespace") else full
-                nd = ctx.ns_docs.get(full_q) or ctx.ns_docs.get(full)
+                nd = _lookup_namespace_doc(ctx, path, cfg, module_key)
                 node = {"name": name, "type": "namespace", "content": []}
                 if nd:
                     brief = nd.get("brief", "")
@@ -451,10 +450,13 @@ def _namespace_content_for_module(its, cfg, ctx, module_key=""):
                 name = path[-1]
                 full = "::".join(path)
                 full_q = f"{cfg['root_namespace']}::{full}" if cfg.get("root_namespace") else full
-                # Try to find docs using either the module-relative key or the
-                # original fully-qualified key (with any stripped prefix).
                 original_full = "::".join(parts[:offset + i])
-                nd = ctx.ns_docs.get(original_full) or ctx.ns_docs.get(full_q) or ctx.ns_docs.get(full)
+                nd = (
+                    ctx.ns_docs.get(original_full)
+                    or ctx.ns_docs.get(full_q)
+                    or ctx.ns_docs.get(full)
+                    or _lookup_namespace_doc(ctx, path, cfg, module_key)
+                )
                 node = {"name": name, "type": "namespace", "content": []}
                 if nd:
                     brief = nd.get("brief", "")
@@ -616,3 +618,23 @@ def assemble(ctx, cfg, project_name, cfg_dir=None):
             if m["name"] in ov:
                 m.update(ov[m["name"]])
     return doc
+
+
+def _lookup_namespace_doc(ctx, path, cfg, module_key=""):
+    """Resolve namespace docs for both fully-qualified and stripped paths."""
+    parts = list(path)
+    if not parts:
+        return None
+    root = [x for x in (cfg.get("root_namespace") or "").split("::") if x]
+    candidates = []
+    for prefix in ([], root):
+        if prefix:
+            candidates.append("::".join(prefix + parts))
+        for i in range(1, len(parts) + 1):
+            candidates.append("::".join(prefix + parts[:i]))
+    if module_key:
+        candidates.extend(["::".join([module_key] + parts), "::".join([module_key] + parts[:1])])
+    for key in candidates:
+        if key in ctx.ns_docs:
+            return ctx.ns_docs[key]
+    return None
